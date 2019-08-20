@@ -3,6 +3,7 @@
 
 #include <type_traits>
 #include <boost/safe_float/utility.hpp>
+#include <boost/safe_float/policy/cast_base_policy.hpp>
 
 
 namespace boost
@@ -38,6 +39,12 @@ template<typename CAST, typename T>
 struct can_explicitly_cast_from_value_type<CAST, T, std::enable_if_t<is_safe_float<T>::value>> :
     std::conditional_t<CAST::template can_explicitly_cast_from<typename T::value_type>, std::true_type, std::false_type>
 {};
+
+template<typename SF, typename T>
+struct can_cast_to : std::false_type {};
+
+template<typename FP, template<typename> typename CHECK, typename REPORT, template<typename> typename CAST, typename T>
+struct can_cast_to<safe_float<FP, CHECK, REPORT, CAST>, T> : std::conditional_t<CAST<safe_float<FP, CHECK, REPORT, CAST>>::template can_cast_to<T>, std::true_type, std::false_type> {};
 } // namespace detail
 
 template<template<typename> typename FLOAT_CAST, template<typename> typename POLICY_CAST, bool is_explicit = false>
@@ -55,7 +62,8 @@ struct cast_from_safe
         static constexpr bool can_explicitly_cast_from =
             is_explicit&& is_safe_float<T>::value
             && (detail::can_cast_from_value_type<FLOAT_CAST<SF>, T>::value || detail::can_explicitly_cast_from_value_type<FLOAT_CAST<SF>, T>::value)&&(
-                POLICY_CAST<SF>::template can_cast_from<T> || POLICY_CAST<SF>::template can_explicitly_cast_from<T>);
+                POLICY_CAST<SF>::template can_cast_from<T> || POLICY_CAST<SF>::template can_explicitly_cast_from<T>)
+            && !detail::can_cast_to<T, SF>::value; // Disable explicit construction from T if T can be implictly converted to SF
 
         template<typename T>
         static void cast_from(typename SF::value_type& target, T source)

@@ -84,16 +84,6 @@ struct cast_helper
     }
 };
 
-/**
- * @brief compose_cast_policy creates a new policy combining the policies received by parameter
- * Cast policies passed by parameter should implement non overlaping casting methods
- */
-template<class FP, template<class> class... POLICIES>
-class compose_cast_policy : public POLICIES<FP>...
-{
-    // TODO: NOT IMPLEMENTED
-    // check all POLICIES inherit from cast_policy
-};
 
 } // namespace policy
 } // namespace safe_float

@@ -14,6 +14,7 @@
 #include <boost/safe_float/policy/cast_from_primitive.hpp>
 #include <boost/safe_float/policy/cast_to_primitive.hpp>
 #include <boost/safe_float/policy/cast_from_safe.hpp>
+#include <boost/safe_float/policy/cast_to_safe.hpp>
 
 //composed policies
 #include <boost/safe_float/policy/policy_composers.hpp>

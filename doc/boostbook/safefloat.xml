@@ -416,7 +416,7 @@ int main(){
     using sf = safe_float&lt;float,
         policy::check_overflow,
         policy::on_fail_throw,
-        policy::allow_cast_from&lt;int&gt;
+        policy::allow_cast_from&lt;int&gt;::policy
     &gt;;
     int i = 1;
     double d = 2.0;
@@ -836,6 +836,16 @@ struct Cast {
         return T{f};
     }
 };</programlisting>
+      
+      <emphasis>Note</emphasis>
+      <para>
+        <code>can_explicitly_cast_from</code> (resp. <code>can_explicitly_cast_to</code>) are to be interpreted as "can <emphasis role="bold">only</emphasis>
+        be cast <emphasis role="bold">explicit</emphasis> from (resp. to) type T. Whereas <code>can_cast_from</code> (resp. <code>can_cast_to</code>)
+        enables implicit and explicit cast from (resp. to) type T.
+        Both <code>can_cast_from</code> and <code>can_explicitly_cast_from</code> shouldn't be true for a given type T at the same time
+        as it would enable both explicit and implicit constructor in the safe_float type resulting in
+        a compilation error when trying to construct explicitly from type T. Same with <code>can_cast_to</code> and <code>can_explicitly_cast_to</code> in the reverse direction.
+      </para>
     </section>
   </section>
 
@@ -1391,7 +1401,225 @@ safe_float&lt;float, new_policy&gt; sf;
               convertible to type T.
             </para>
           </listitem>
+          <listitem>
+            <para>
+              <code>cast_from_safe_policy::more_restrictive</code>
+              : Allow implicit cast from other <code>safe_float</code> types whose check policy is
+              more restrictive than the one used for the current <code>safe_float</code> (ie. the set of
+              checks done by the current <code>safe_float</code> is a subset of the set of checks done
+              by the other <code>safe_float</code>). This policy only takes into account the check policies and not the types
+              of the wrapped floating point involved.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_from_safe_policy::more_restrictive_explicit</code>
+              : Allow explicit cast from other <code>safe_float</code> types whose check policy is
+              more restrictive than the one used for the current <code>safe_float</code> (ie. the set of
+              checks done by the current <code>safe_float</code> is a subset of the set of checks done
+              by the other <code>safe_float</code>). This policy only takes into account the check policies and not the types
+              of the wrapped floating point involved.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_from_safe_policy::less_restrictive</code>
+              : Allow implicit cast from other <code>safe_float</code> types whose check policy is
+              less restrictive than the one used for the current <code>safe_float</code> (ie. the set of
+              checks done by the current <code>safe_float</code> is a superset of the set of checks done
+              by the other <code>safe_float</code>). This policy only takes into account the check policies and not the types
+              of the wrapped floating point involved.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_from_safe_policy::less_restrictive_explicit</code>
+              : Allow explicit cast from other <code>safe_float</code> types whose check policy is
+              less restrictive than the one used for the current <code>safe_float</code> (ie. the set of
+              checks done by the current <code>safe_float</code> is a superset of the set of checks done
+              by the other <code>safe_float</code>). This policy only takes into account the check policies and not the types
+              of the wrapped floating point involved.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_from_safe_policy::equivalent</code>
+              : Allow implicit cast from other <code>safe_float</code> types whose check policy is
+              equivalent to the one used for the current <code>safe_float</code> (ie. the set of
+              checks done by the current <code>safe_float</code> is the same that the set of checks done
+              by the other <code>safe_float</code>). This policy only takes into account the check policies and not the types
+              of the wrapped floating point involved. Equivalent policies are not always the same, composed policies with the same 
+              component but declared in a different order are not the same but are equivalent.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_from_safe_policy::equivalent_explicit</code>
+              : Allow explicit cast from other <code>safe_float</code> types whose check policy is
+              equivalent to the one used for the current <code>safe_float</code> (ie. the set of
+              checks done by the current <code>safe_float</code> is the same that the set of checks done
+              by the other <code>safe_float</code>). This policy only takes into account the check policies and not the types
+              of the wrapped floating point involved. Equivalent policies are not always the same, composed policies with the same
+              component but declared in a different order are not the same but are equivalent.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_from_safe_policy::all</code>
+              : Allow implicit cast from every other <code>safe_float</code> types disregarding the check policies. 
+              This policy only takes into account the check policies and not the types
+              of the wrapped floating point involved.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_from_safe_policy::all_explicit</code>
+              : Allow explicit cast from every other <code>safe_float</code> types disregarding the check policies.
+              This policy only takes into account the check policies and not the types
+              of the wrapped floating point involved.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_from_safe&lt;FLOAT_CAST, SF_CAST&gt;::policy</code>
+              : Allow implicit cast from other <code>safe_float</code> types that fulfill two conditions. The wrapped floating point type of the other
+              <code>safe_float</code> must be implicitly castable into the desired <code>safe_float</code> using <code>FLOAT_CAST</code> policy and the other
+              <code>safe_float</code> itself must be implictly castable into the desired <code>safe_float</code> using <code>SF_CAST</code>. <code>FLOAT_CAST</code> and
+              <code>SF_CAST</code> are cast policies. Usually <code>FLOAT_CAST</code> will be a policy of the <code>cast_from_primitive::*</code> family and
+              <code>SF_CAST</code> will be of the <code>cast_from_safe_policy::*</code> family, this makes it possible to control from which <code>safe_float</code>
+              we will allow cast depending of both the wrapped floating-point type and the check policies.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_from_safe_explicit&lt;FLOAT_CAST, SF_CAST&gt;::policy</code>
+              : Allow explicit cast from other <code>safe_float</code> types that fulfill two conditions. The wrapped floating point type of the other
+              <code>safe_float</code> must be implicitly or explicitly castable into the desired <code>safe_float</code> using <code>FLOAT_CAST</code> policy and the other
+              <code>safe_float</code> itself must be implictly or explicitly castable into the desired <code>safe_float</code> using <code>SF_CAST</code>. <code>FLOAT_CAST</code> and
+              <code>SF_CAST</code> are cast policies. Usually <code>FLOAT_CAST</code> will be a policy of the <code>cast_from_primitive::*</code> family and
+              <code>SF_CAST</code> will be of the <code>cast_from_safe_policy::*</code> family, this makes it possible to control from which <code>safe_float</code>
+              we will allow cast depending of both the wrapped floating-point type and the check policies.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_to_safe_policy::more_restrictive</code>
+              : Allow implicit cast to other <code>safe_float</code> types whose check policy is
+              more restrictive than the one used for the current <code>safe_float</code> (ie. the set of
+              checks done by the current <code>safe_float</code> is a subset of the set of checks done
+              by the other <code>safe_float</code>). This policy only takes into account the check policies and not the types
+              of the wrapped floating point involved.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_to_safe_policy::more_restrictive_explicit</code>
+              : Allow explicit cast to other <code>safe_float</code> types whose check policy is
+              more restrictive than the one used for the current <code>safe_float</code> (ie. the set of
+              checks done by the current <code>safe_float</code> is a subset of the set of checks done
+              by the other <code>safe_float</code>). This policy only takes into account the check policies and not the types
+              of the wrapped floating point involved.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_to_safe_policy::less_restrictive</code>
+              : Allow implicit cast to other <code>safe_float</code> types whose check policy is
+              less restrictive than the one used for the current <code>safe_float</code> (ie. the set of
+              checks done by the current <code>safe_float</code> is a superset of the set of checks done
+              by the other <code>safe_float</code>). This policy only takes into account the check policies and not the types
+              of the wrapped floating point involved.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_to_safe_policy::less_restrictive_explicit</code>
+              : Allow explicit cast to other <code>safe_float</code> types whose check policy is
+              less restrictive than the one used for the current <code>safe_float</code> (ie. the set of
+              checks done by the current <code>safe_float</code> is a superset of the set of checks done
+              by the other <code>safe_float</code>). This policy only takes into account the check policies and not the types
+              of the wrapped floating point involved.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_to_safe_policy::equivalent</code>
+              : Allow implicit cast to other <code>safe_float</code> types whose check policy is
+              equivalent to the one used for the current <code>safe_float</code> (ie. the set of
+              checks done by the current <code>safe_float</code> is the same that the set of checks done
+              by the other <code>safe_float</code>). This policy only takes into account the check policies and not the types
+              of the wrapped floating point involved. Equivalent policies are not always the same, composed policies with the same
+              component but declared in a different order are not the same but are equivalent.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_to_safe_policy::equivalent_explicit</code>
+              : Allow explicit cast to other <code>safe_float</code> types whose check policy is
+              equivalent to the one used for the current <code>safe_float</code> (ie. the set of
+              checks done by the current <code>safe_float</code> is the same that the set of checks done
+              by the other <code>safe_float</code>). This policy only takes into account the check policies and not the types
+              of the wrapped floating point involved. Equivalent policies are not always the same, composed policies with the same
+              component but declared in a different order are not the same but are equivalent.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_to_safe_policy::all</code>
+              : Allow implicit cast to every other <code>safe_float</code> types disregarding the check policies.
+              This policy only takes into account the check policies and not the types
+              of the wrapped floating point involved.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_to_safe_policy::all_explicit</code>
+              : Allow explicit cast to every other <code>safe_float</code> types disregarding the check policies.
+              This policy only takes into account the check policies and not the types
+              of the wrapped floating point involved.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_to_safe&lt;FLOAT_CAST, SF_CAST&gt;::policy</code>
+              : Allow implicit cast to other <code>safe_float</code> types that fulfill two conditions. The wrapped floating point type of the other
+              <code>safe_float</code> must be implicitly castable from the desired <code>safe_float</code> using <code>FLOAT_CAST</code> policy and the other
+              <code>safe_float</code> itself must be implictly castable from the desired <code>safe_float</code> using <code>SF_CAST</code>. <code>FLOAT_CAST</code> and
+              <code>SF_CAST</code> are cast policies. Usually <code>FLOAT_CAST</code> will be a policy of the <code>cast_to_primitive::*</code> family and
+              <code>SF_CAST</code> will be of the <code>cast_to_safe_policy::*</code> family, this makes it possible to control to which <code>safe_float</code>
+              we will allow cast depending of both the wrapped floating-point type and the check policies.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <code>cast_to_safe_explicit&lt;FLOAT_CAST, SF_CAST&gt;::policy</code>
+              : Allow explicit cast to other <code>safe_float</code> types that fulfill two conditions. The wrapped floating point type of the other
+              <code>safe_float</code> must be implicitly or explicitly castable from the desired <code>safe_float</code> using <code>FLOAT_CAST</code> policy and the other
+              <code>safe_float</code> itself must be implictly or explicitly castable from the desired <code>safe_float</code> using <code>SF_CAST</code>. <code>FLOAT_CAST</code> and
+              <code>SF_CAST</code> are cast policies. Usually <code>FLOAT_CAST</code> will be a policy of the <code>cast_to_primitive::*</code> family and
+              <code>SF_CAST</code> will be of the <code>cast_to_safe_policy::*</code> family, this makes it possible to control from which <code>safe_float</code>
+              we will allow cast depending of both the wrapped floating-point type and the check policies.
+            </para>
+          </listitem>
         </itemizedlist>
+        
+        <para>Cast policies can be composed using <code>policy::compose_cast</code> :
+          <programlisting>
+template&lt;typename T&gt;
+using allow_cast_to_from_int = policy::compose_cast&lt;policy::allow_cast_from&lt;int&gt;, policy::allow_cast_to&lt;int&gt;&gt;::policy&lt;T&gt;;
+            
+using sf = safe_float&lt;policy::check_all, policy::on_fail_throw, allow_cast_to_from_int>;
+// sf can be cast from and to int</programlisting>
+          A composed cast policy allow cast if any of its component does allow it.
+          If multiple component allow cast to/from a given type T, the function used to perform the cast is the function
+          of the first component that allow cast to/from type T.
+          If one or more component allow implicit cast to/from a given type T and one or more component allow explicit cast
+          to/from this type T, the composed policy will allow implicit cast to/from type T and will use the function of the first
+          component that allow implicit cast to/from T (for example fot the composed policy <code>compose_cast&lt;policy1, policy2&gt;</code>,
+          with <code>policy1</code> allowing explicit cast from T and <code>policy2</code> allowing implicit cast from T, the construction will use
+          <code>policy2::cast_from</code> function but if both <code>policy1</code> and <code>policy2</code> allow implicit cast from T, the construction will use
+          <code>policy1::cast_from</code> function as it is the first)
+        </para>
       </section>
 
       <section>
